@@ -55,6 +55,7 @@ map those streams to function inputs and outputs with processors.
 	cmd.AddCommand(NewHandlerCommand(ctx, c))
 	cmd.AddCommand(NewStreamCommand(ctx, c))
 	cmd.AddCommand(NewProcessorCommand(ctx, c))
+	cmd.AddCommand(NewBindingCommand(ctx, c))
 
 	return cmd
 }

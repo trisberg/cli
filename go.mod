@@ -17,6 +17,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
+	github.com/trisberg/binding v0.0.0-20190628150545-d83f1f60e1d1 // indirect
 	golang.org/x/crypto v0.0.0-20190424203555-c05e17bb3b2d
 	k8s.io/api v0.0.0-20190515023547-db5a9d1c40eb
 	k8s.io/apimachinery v0.0.0-20190515023456-b74e4c97951f
