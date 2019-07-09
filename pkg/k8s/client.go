@@ -21,6 +21,8 @@ import (
 	buildv1alpha1 "github.com/projectriff/system/pkg/client/clientset/versioned/typed/build/v1alpha1"
 	requestv1alpha1 "github.com/projectriff/system/pkg/client/clientset/versioned/typed/request/v1alpha1"
 	streamv1alpha1 "github.com/projectriff/system/pkg/client/clientset/versioned/typed/stream/v1alpha1"
+	serviceclientset "github.com/trisberg/service/pkg/client/clientset/versioned"
+	servicev1alpha1 "github.com/trisberg/service/pkg/client/clientset/versioned/typed/service/v1alpha1"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
@@ -35,6 +37,7 @@ type Client interface {
 	Build() buildv1alpha1.BuildV1alpha1Interface
 	Request() requestv1alpha1.RequestV1alpha1Interface
 	Stream() streamv1alpha1.StreamV1alpha1Interface
+	Service() servicev1alpha1.ServiceV1alpha1Interface
 }
 
 func (c *client) DefaultNamespace() string {
@@ -61,6 +64,10 @@ func (c *client) Stream() streamv1alpha1.StreamV1alpha1Interface {
 	return c.lazyLoadRiffClientOrDie().StreamV1alpha1()
 }
 
+func (c *client) Service() servicev1alpha1.ServiceV1alpha1Interface {
+	return c.lazyLoadServiceClientOrDie().ServiceV1alpha1()
+}
+
 func NewClient(kubeConfigFile string) Client {
 	return &client{kubeConfigFile: kubeConfigFile}
 }
@@ -72,6 +79,7 @@ type client struct {
 	restConfig       *rest.Config
 	kubeClient       *kubernetes.Clientset
 	riffClient       *projectriffclientset.Clientset
+	serviceClient    *serviceclientset.Clientset
 }
 
 func (c *client) lazyLoadKubeConfig() clientcmd.ClientConfig {
@@ -110,6 +118,14 @@ func (c *client) lazyLoadRiffClientOrDie() *projectriffclientset.Clientset {
 		c.riffClient = projectriffclientset.NewForConfigOrDie(restConfig)
 	}
 	return c.riffClient
+}
+
+func (c *client) lazyLoadServiceClientOrDie() *serviceclientset.Clientset {
+	if c.serviceClient == nil {
+		restConfig := c.lazyLoadRestConfigOrDie()
+		c.serviceClient = serviceclientset.NewForConfigOrDie(restConfig)
+	}
+	return c.serviceClient
 }
 
 func (c *client) lazyLoadDefaultNamespaceOrDie() string {

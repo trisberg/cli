@@ -39,6 +39,8 @@ type HandlerCreateOptions struct {
 	Image          string
 	ApplicationRef string
 	FunctionRef    string
+	BindingRef     string
+	BindingType    string
 
 	Env     []string
 	EnvFrom []string
@@ -145,6 +147,82 @@ func (opts *HandlerCreateOptions) Exec(ctx context.Context, c *cli.Config) error
 		}
 		handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env, parsers.EnvVarFrom(env))
 	}
+	if opts.BindingRef != "" {
+		if handler.Spec.Template.Containers[0].Env == nil {
+			handler.Spec.Template.Containers[0].Env = []corev1.EnvVar{}
+		}
+		if opts.BindingType == "vcap" {
+			envCredentials := "VCAP_SERVICES"
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: envCredentials,
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: opts.BindingRef + "-credentials",
+							},
+							Key: "vcap.services",
+						},
+					},
+				})
+		} else {
+			hostVar := "BACKING_SERVICE_" + strings.ToUpper(opts.BindingRef) + "_HOST"
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: hostVar,
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: opts.BindingRef + "-credentials",
+							},
+							Key: "host",
+						},
+					},
+				})
+			uriVar := "BACKING_SERVICE_" + strings.ToUpper(opts.BindingRef) + "_URI"
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: uriVar,
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: opts.BindingRef + "-credentials",
+							},
+							Key: "uri",
+						},
+					},
+				})
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: "SPRING_DATASOURCE_USERNAME",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: opts.BindingRef + "-credentials",
+							},
+							Key: "username",
+						},
+					},
+				})
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: "SPRING_DATASOURCE_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: opts.BindingRef + "-credentials",
+							},
+							Key: "password",
+						},
+					},
+				})
+			handler.Spec.Template.Containers[0].Env = append(handler.Spec.Template.Containers[0].Env,
+				corev1.EnvVar{
+					Name: "SPRING_DATASOURCE_URL",
+					Value: "jdbc:${" + uriVar + "}",
+				})
+		}
+	}
 
 	if opts.DryRun {
 		cli.DryRunResource(ctx, handler, handler.GetGroupVersionKind())
@@ -224,6 +302,8 @@ and ` + cli.EnvFromFlagName + ` to map values from a ConfigMap or Secret.
 	cmd.Flags().StringVar(&opts.Image, cli.StripDash(cli.ImageFlagName), "", "container `image` to deploy")
 	cmd.Flags().StringVar(&opts.ApplicationRef, cli.StripDash(cli.ApplicationRefFlagName), "", "`name` of application to deploy")
 	cmd.Flags().StringVar(&opts.FunctionRef, cli.StripDash(cli.FunctionRefFlagName), "", "`name` of function to deploy")
+	cmd.Flags().StringVar(&opts.BindingRef, cli.StripDash(cli.BindingRefFlagName), "", "`name` of service binding to include")
+	cmd.Flags().StringVar(&opts.BindingType, cli.StripDash(cli.BindingTypeFlagName), "", "type of service binding, 'vcap' or 'spring-boot'")
 	cmd.Flags().StringArrayVar(&opts.Env, cli.StripDash(cli.EnvFlagName), []string{}, fmt.Sprintf("environment `variable` defined as a key value pair separated by an equals sign, example %q (may be set multiple times)", fmt.Sprintf("%s MY_VAR=my-value", cli.EnvFlagName)))
 	cmd.Flags().StringArrayVar(&opts.EnvFrom, cli.StripDash(cli.EnvFromFlagName), []string{}, fmt.Sprintf("environment `variable` from a config map or secret, example %q, %q (may be set multiple times)", fmt.Sprintf("%s MY_SECRET_VALUE=secretKeyRef:my-secret-name:key-in-secret", cli.EnvFromFlagName), fmt.Sprintf("%s MY_CONFIG_MAP_VALUE=configMapKeyRef:my-config-map-name:key-in-config-map", cli.EnvFromFlagName)))
 	cmd.Flags().BoolVar(&opts.Tail, cli.StripDash(cli.TailFlagName), false, "watch handler logs")

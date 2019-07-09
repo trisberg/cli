@@ -23,16 +23,23 @@ import (
 
 	"github.com/projectriff/cli/pkg/cli"
 	"github.com/spf13/cobra"
-	bndv1 "github.com/trisberg/binding"
+	servicev1 "github.com/trisberg/service/pkg/apis/service/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type BindingCreateOptions struct {
 	cli.ResourceOptions
 
-	Host      string
-	Port      string
-	SecretRef string
+	SecretRef   string
+	URI         string
+	URIKey      string
+	Host        string
+	HostKey     string
+	Port        string
+	PortKey     string
+	Username    string
+	UsernameKey string
+	PasswordKey string
 
 	DryRun bool
 }
@@ -52,7 +59,7 @@ func (opts *BindingCreateOptions) Validate(ctx context.Context) *cli.FieldError 
 }
 
 func (opts *BindingCreateOptions) Exec(ctx context.Context, c *cli.Config) error {
-	binding := &bndv1.Binding{
+	binding := &servicev1.Binding{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: opts.Namespace,
 			Name:      opts.Name,
@@ -60,24 +67,46 @@ func (opts *BindingCreateOptions) Exec(ctx context.Context, c *cli.Config) error
 	}
 
 	if opts.SecretRef != "" {
-		//handler.Spec.Build = &requestv1alpha1.Build{
-		//	ApplicationRef: opts.SecretRef,
-		//}
+		binding.Spec.SecretRef = opts.SecretRef
+	}
+	if opts.URI != "" {
+		binding.Spec.URI = opts.URI
+	}
+	if opts.URIKey != "" {
+		binding.Spec.URIKey = opts.URIKey
 	}
 	if opts.Host != "" {
-		//handler.Spec.Template.Containers[0].Image = opts.Host
+		binding.Spec.Host = opts.Host
+	}
+	if opts.HostKey != "" {
+		binding.Spec.HostKey = opts.HostKey
+	}
+	if opts.Port != "" {
+		binding.Spec.Port = opts.Port
+	}
+	if opts.PortKey != "" {
+		binding.Spec.PortKey = opts.PortKey
+	}
+	if opts.Username != "" {
+		binding.Spec.Username = opts.Username
+	}
+	if opts.UsernameKey != "" {
+		binding.Spec.UsernameKey = opts.UsernameKey
+	}
+	if opts.PasswordKey != "" {
+		binding.Spec.PasswordKey = opts.PasswordKey
 	}
 
 	if opts.DryRun {
 		//cli.DryRunResource(ctx, handler, handler.GetGroupVersionKind())
 	} else {
 		var err error
-		binding, err = c.Core().Secrets(opts.Namespace).Create(binding)
+		binding, err = c.Service().Bindings(opts.Namespace).Create(binding)
 		if err != nil {
 			return err
 		}
 	}
-	c.Successf("Created binding %q\n", binding.Name)
+	c.Successf("Created binding.service %q\n", binding.Name)
 	return nil
 }
 
@@ -105,9 +134,16 @@ func NewBindingCreateCommand(ctx context.Context, c *cli.Config) *cobra.Command 
 	}
 
 	cli.NamespaceFlag(cmd, c, &opts.Namespace)
+	cmd.Flags().StringVar(&opts.SecretRef, cli.StripDash(cli.SecretRefFlagName), "", "name of secret for the service")
+	cmd.Flags().StringVar(&opts.URI, cli.StripDash(cli.URIFlagName), "", "URI of service to bind")
+	cmd.Flags().StringVar(&opts.URIKey, cli.StripDash(cli.URIKeyFlagName), "", "the key for URI in the secret")
 	cmd.Flags().StringVar(&opts.Host, cli.StripDash(cli.HostFlagName), "", "hostname of service to bind")
+	cmd.Flags().StringVar(&opts.HostKey, cli.StripDash(cli.HostKeyFlagName), "", "the key for hostname in the secret")
 	cmd.Flags().StringVar(&opts.Port, cli.StripDash(cli.PortFlagName), "", "port of service to bind")
-	cmd.Flags().StringVar(&opts.SecretRef, cli.StripDash(cli.SecretRefFlagName), "", "`name` of secret for the service")
+	cmd.Flags().StringVar(&opts.PortKey, cli.StripDash(cli.PortKeyFlagName), "", "the key for port in the secret")
+	cmd.Flags().StringVar(&opts.Username, cli.StripDash(cli.UsernameFlagName), "", "username to use when connecting to service")
+	cmd.Flags().StringVar(&opts.UsernameKey, cli.StripDash(cli.UsernameKeyFlagName), "", "the key for username in the secret")
+	cmd.Flags().StringVar(&opts.PasswordKey, cli.StripDash(cli.PasswordKeyFlagName), "", "the key for the password in the secret")
 
 	return cmd
 }

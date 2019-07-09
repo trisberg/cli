@@ -17,11 +17,10 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
-	github.com/trisberg/binding v0.0.0-20190628150545-d83f1f60e1d1 // indirect
-	golang.org/x/crypto v0.0.0-20190424203555-c05e17bb3b2d
-	k8s.io/api v0.0.0-20190515023547-db5a9d1c40eb
-	k8s.io/apimachinery v0.0.0-20190515023456-b74e4c97951f
-	k8s.io/client-go v0.0.0-20190514184034-dd7f3ad83f18
+	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
+	k8s.io/api v0.0.0-20190627205229-acea843d18eb
+	k8s.io/apimachinery v0.0.0-20190627205106-bc5732d141a8
+	k8s.io/client-go v0.0.0-20190627205436-11059204e07c
 )
 
 require (
@@ -31,8 +30,6 @@ require (
 	github.com/evanphx/json-patch v4.2.0+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/gofuzz v1.0.0 // indirect
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190212212710-3befbb6ad0cc // indirect
@@ -44,11 +41,15 @@ require (
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+	github.com/trisberg/service v0.0.0-20190705200517-f4cbd53354b4
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	k8s.io/apiextensions-apiserver v0.0.0-20190627210706-e1f2db1c2108 // indirect
 	k8s.io/kube-openapi v0.0.0-20190502190224-411b2483e503 // indirect
+	sigs.k8s.io/controller-runtime v0.1.12 // indirect
+	sigs.k8s.io/testing_frameworks v0.1.1 // indirect
 )
 
 replace (
