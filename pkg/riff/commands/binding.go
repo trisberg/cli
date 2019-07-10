@@ -35,6 +35,8 @@ func NewBindingCommand(ctx context.Context, c *cli.Config) *cobra.Command {
 		Aliases: []string{"bindings"},
 	}
 
+	cmd.AddCommand(NewBindingListCommand(ctx, c))
 	cmd.AddCommand(NewBindingCreateCommand(ctx, c))
+	cmd.AddCommand(NewBindingDeleteCommand(ctx, c))
 	return cmd
 }
