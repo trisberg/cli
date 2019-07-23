@@ -14,7 +14,7 @@ require (
 	github.com/knative/pkg v0.0.0-20190624141606-d82505e6c5b4
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/projectriff/system v0.0.0-20190627032734-afb8a6d9901d
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v0.0.4
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190611184440-5c40567a22f8
@@ -26,8 +26,8 @@ require (
 require (
 	contrib.go.opencensus.io/exporter/stackdriver v0.10.2 // indirect
 	github.com/Azure/go-autorest v0.0.0-20190226174127-bca49d5b51a5 // indirect
-	github.com/cpuguy83/go-md2man v1.0.10 // indirect
-	github.com/evanphx/json-patch v4.2.0+incompatible // indirect
+	github.com/go-logr/logr v0.1.0 // indirect
+	github.com/go-logr/zapr v0.1.1 // indirect
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect

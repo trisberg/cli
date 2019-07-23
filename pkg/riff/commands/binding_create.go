@@ -126,12 +126,13 @@ func NewBindingCreateCommand(ctx context.Context, c *cli.Config) *cobra.Command 
 		Example: strings.Join([]string{
 			fmt.Sprintf("%s binding create my-binding %s my-service.default.svc.cluster.local %s 1234 %s my-service-secret", c.Name, cli.HostFlagName, cli.PortFlagName, cli.SecretRefFlagName),
 		}, "\n"),
-		Args: cli.Args(
-			cli.NameArg(&opts.Name),
-		),
 		PreRunE: cli.ValidateOptions(ctx, opts),
 		RunE:    cli.ExecOptions(ctx, c, opts),
 	}
+
+	cli.Args(cmd,
+		cli.NameArg(&opts.Name),
+	)
 
 	cli.NamespaceFlag(cmd, c, &opts.Namespace)
 	cmd.Flags().StringVar(&opts.SecretRef, cli.StripDash(cli.SecretRefFlagName), "", "name of secret for the service")

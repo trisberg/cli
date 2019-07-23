@@ -581,7 +581,7 @@ k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
 k8s.io/apimachinery/pkg/util/mergepatch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/pkg/util/framer
-# k8s.io/client-go v0.0.0-20190514184034-dd7f3ad83f18 => k8s.io/client-go v0.0.0-20190226174127-78295b709ec6
+# k8s.io/client-go v0.0.0-20190627205436-11059204e07c => k8s.io/client-go v0.0.0-20190226174127-78295b709ec6
 k8s.io/client-go/plugin/pkg/client/auth
 k8s.io/client-go/kubernetes
 k8s.io/client-go/kubernetes/typed/core/v1

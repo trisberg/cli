@@ -86,7 +86,6 @@ func NewBindingListCommand(ctx context.Context, c *cli.Config) *cobra.Command {
 			fmt.Sprintf("%s binding list", c.Name),
 			fmt.Sprintf("%s binding list %s", c.Name, cli.AllNamespacesFlagName),
 		}, "\n"),
-		Args:    cli.Args(),
 		PreRunE: cli.ValidateOptions(ctx, opts),
 		RunE:    cli.ExecOptions(ctx, c, opts),
 	}
