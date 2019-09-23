@@ -34,6 +34,7 @@ riff core deployer create my-image-deployer --image registry.example.com/my-imag
 
 ```
       --application-ref name    name of application to deploy
+      --binding-secret name     name of binding secret to be mounted (may be set multiple times)
       --container-ref name      name of container to deploy
       --dry-run                 print kubernetes resources to stdout rather than apply them to the cluster, messages normally on stdout will be sent to stderr
       --env variable            environment variable defined as a key value pair separated by an equals sign, example "--env MY_VAR=my-value" (may be set multiple times)

@@ -22,9 +22,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/projectriff/cli/pkg/parsers"
+
 	"github.com/projectriff/cli/pkg/cli"
 	"github.com/projectriff/cli/pkg/k8s"
-	"github.com/projectriff/cli/pkg/parsers"
 	"github.com/projectriff/cli/pkg/race"
 	"github.com/projectriff/cli/pkg/validation"
 	corev1alpha1 "github.com/projectriff/system/pkg/apis/core/v1alpha1"
@@ -43,6 +44,8 @@ type DeployerCreateOptions struct {
 
 	Env     []string
 	EnvFrom []string
+
+	BindingSecret []string
 
 	Tail        bool
 	WaitTimeout string
@@ -145,11 +148,59 @@ func (opts *DeployerCreateOptions) Exec(ctx context.Context, c *cli.Config) erro
 		deployer.Spec.Template.Containers[0].Image = opts.Image
 	}
 
+	profiles := []string{}
+	for _, binding := range opts.BindingSecret {
+		name, config, profile := splitNameAndConfig(binding)
+		if profile != "" {
+			profiles = append(profiles, profile)
+		}
+		if deployer.Spec.Template.Containers[0].VolumeMounts == nil {
+			deployer.Spec.Template.Containers[0].VolumeMounts = []corev1.VolumeMount{}
+		}
+		deployer.Spec.Template.Containers[0].VolumeMounts = append(deployer.Spec.Template.Containers[0].VolumeMounts,
+			corev1.VolumeMount{
+				Name:      name,
+				MountPath: "/workspace/config",
+				ReadOnly:  true,
+			})
+		if deployer.Spec.Template.Volumes == nil {
+			deployer.Spec.Template.Volumes = []corev1.Volume{}
+		}
+		var mode int32 = 420
+		deployer.Spec.Template.Volumes = append(deployer.Spec.Template.Volumes,
+			corev1.Volume{
+				Name: name,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						DefaultMode: &mode,
+						SecretName:  name,
+						Items: []corev1.KeyToPath{
+							{
+								Key:  "config.yaml",
+								Path: config,
+							},
+						},
+					},
+				},
+			})
+	}
 	for _, env := range opts.Env {
+		if strings.HasPrefix(env, "SPRING_PROFILES_ACTIVE=") {
+			profiles = append(profiles, strings.Split(env[strings.Index(env, "=")+1:], ",")...)
+		} else {
+			if deployer.Spec.Template.Containers[0].Env == nil {
+				deployer.Spec.Template.Containers[0].Env = []corev1.EnvVar{}
+			}
+			deployer.Spec.Template.Containers[0].Env = append(deployer.Spec.Template.Containers[0].Env, parsers.EnvVar(env))
+		}
+	}
+	if len(profiles) > 0 {
 		if deployer.Spec.Template.Containers[0].Env == nil {
 			deployer.Spec.Template.Containers[0].Env = []corev1.EnvVar{}
 		}
-		deployer.Spec.Template.Containers[0].Env = append(deployer.Spec.Template.Containers[0].Env, parsers.EnvVar(env))
+		envProfiles := "SPRING_PROFILES_ACTIVE=" + strings.Join(profiles, ",")
+		deployer.Spec.Template.Containers[0].Env = append(deployer.Spec.Template.Containers[0].Env, parsers.EnvVar(envProfiles))
+
 	}
 	for _, env := range opts.EnvFrom {
 		if deployer.Spec.Template.Containers[0].Env == nil {
@@ -190,6 +241,26 @@ func (opts *DeployerCreateOptions) Exec(ctx context.Context, c *cli.Config) erro
 		}
 	}
 	return nil
+}
+
+func splitNameAndConfig(s string) (string, string, string) {
+	var name string
+	var config string
+	var profile string
+	if strings.Contains(s, ":") {
+		name = s[0:strings.Index(s, ":")]
+		config = s[strings.Index(s, ":")+1:]
+	} else {
+		name = s
+		config = "config"
+	}
+	if strings.Contains(config, "-") {
+		profile = config[strings.Index(config, "-")+1:]
+	} else {
+		profile = ""
+	}
+	config = config + ".yaml"
+	return name, config, profile
 }
 
 func (opts *DeployerCreateOptions) IsDryRun() bool {
@@ -233,6 +304,7 @@ and ` + cli.EnvFromFlagName + ` to map values from a ConfigMap or Secret.
 	cmd.Flags().StringVar(&opts.FunctionRef, cli.StripDash(cli.FunctionRefFlagName), "", "`name` of function to deploy")
 	cmd.Flags().StringArrayVar(&opts.Env, cli.StripDash(cli.EnvFlagName), []string{}, fmt.Sprintf("environment `variable` defined as a key value pair separated by an equals sign, example %q (may be set multiple times)", fmt.Sprintf("%s MY_VAR=my-value", cli.EnvFlagName)))
 	cmd.Flags().StringArrayVar(&opts.EnvFrom, cli.StripDash(cli.EnvFromFlagName), []string{}, fmt.Sprintf("environment `variable` from a config map or secret, example %q, %q (may be set multiple times)", fmt.Sprintf("%s MY_SECRET_VALUE=secretKeyRef:my-secret-name:key-in-secret", cli.EnvFromFlagName), fmt.Sprintf("%s MY_CONFIG_MAP_VALUE=configMapKeyRef:my-config-map-name:key-in-config-map", cli.EnvFromFlagName)))
+	cmd.Flags().StringArrayVar(&opts.BindingSecret, cli.StripDash(cli.BindingSecretFlagName), []string{}, "`name` of binding secret to be mounted (may be set multiple times)")
 	cmd.Flags().BoolVar(&opts.Tail, cli.StripDash(cli.TailFlagName), false, "watch deployer logs")
 	cmd.Flags().StringVar(&opts.WaitTimeout, cli.StripDash(cli.WaitTimeoutFlagName), "10m", "`duration` to wait for the deployer to become ready when watching logs")
 	cmd.Flags().BoolVar(&opts.DryRun, cli.StripDash(cli.DryRunFlagName), false, "print kubernetes resources to stdout rather than apply them to the cluster, messages normally on stdout will be sent to stderr")

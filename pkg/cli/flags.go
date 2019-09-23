@@ -27,6 +27,7 @@ const (
 	AllNamespacesFlagName         = "--all-namespaces"
 	ApplicationRefFlagName        = "--application-ref"
 	ArtifactFlagName              = "--artifact"
+	BindingSecretFlagName         = "--binding-secret"
 	CacheSizeFlagName             = "--cache-size"
 	ConfigFlagName                = "--config"
 	ConfigurationRefFlagName      = "--configuration-ref"
