@@ -28,6 +28,7 @@ const (
 	ApplicationRefFlagName        = "--application-ref"
 	ArtifactFlagName              = "--artifact"
 	BindingSecretFlagName         = "--binding-secret"
+	BindingTypeFlagName           = "--binding-type"
 	CacheSizeFlagName             = "--cache-size"
 	ConfigFlagName                = "--config"
 	ConfigurationRefFlagName      = "--configuration-ref"

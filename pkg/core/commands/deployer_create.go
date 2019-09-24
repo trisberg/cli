@@ -45,6 +45,7 @@ type DeployerCreateOptions struct {
 	Env     []string
 	EnvFrom []string
 
+	BindingType   string
 	BindingSecret []string
 
 	Tail        bool
@@ -148,9 +149,13 @@ func (opts *DeployerCreateOptions) Exec(ctx context.Context, c *cli.Config) erro
 		deployer.Spec.Template.Containers[0].Image = opts.Image
 	}
 
+	boot := false
+	if opts.BindingType == "spring-boot" {
+		boot = true
+	}
 	profiles := []string{}
 	for _, binding := range opts.BindingSecret {
-		name, config, profile := splitNameAndConfig(binding)
+		name, config, profile := determineProfileNameAndConfig(binding, boot)
 		if profile != "" {
 			profiles = append(profiles, profile)
 		}
@@ -243,23 +248,27 @@ func (opts *DeployerCreateOptions) Exec(ctx context.Context, c *cli.Config) erro
 	return nil
 }
 
-func splitNameAndConfig(s string) (string, string, string) {
+func determineProfileNameAndConfig(s string, boot bool) (string, string, string) {
 	var name string
 	var config string
 	var profile string
 	if strings.Contains(s, ":") {
-		name = s[0:strings.Index(s, ":")]
-		config = s[strings.Index(s, ":")+1:]
-	} else {
-		name = s
-		config = "config"
-	}
-	if strings.Contains(config, "-") {
-		profile = config[strings.Index(config, "-")+1:]
+		profile = s[0:strings.Index(s, ":")]
+		name = s[strings.Index(s, ":")+1:]
+		if boot {
+			config = "application-" + profile + ".yaml"
+		} else {
+			config = "config.yaml"
+		}
 	} else {
 		profile = ""
+		name = s
+		if boot {
+			config = "application.yaml"
+		} else {
+			config = "config.yaml"
+		}
 	}
-	config = config + ".yaml"
 	return name, config, profile
 }
 
@@ -304,6 +313,7 @@ and ` + cli.EnvFromFlagName + ` to map values from a ConfigMap or Secret.
 	cmd.Flags().StringVar(&opts.FunctionRef, cli.StripDash(cli.FunctionRefFlagName), "", "`name` of function to deploy")
 	cmd.Flags().StringArrayVar(&opts.Env, cli.StripDash(cli.EnvFlagName), []string{}, fmt.Sprintf("environment `variable` defined as a key value pair separated by an equals sign, example %q (may be set multiple times)", fmt.Sprintf("%s MY_VAR=my-value", cli.EnvFlagName)))
 	cmd.Flags().StringArrayVar(&opts.EnvFrom, cli.StripDash(cli.EnvFromFlagName), []string{}, fmt.Sprintf("environment `variable` from a config map or secret, example %q, %q (may be set multiple times)", fmt.Sprintf("%s MY_SECRET_VALUE=secretKeyRef:my-secret-name:key-in-secret", cli.EnvFromFlagName), fmt.Sprintf("%s MY_CONFIG_MAP_VALUE=configMapKeyRef:my-config-map-name:key-in-config-map", cli.EnvFromFlagName)))
+	cmd.Flags().StringVar(&opts.BindingType, cli.StripDash(cli.BindingTypeFlagName), "", "`type` of binding like \"spring-boot\"")
 	cmd.Flags().StringArrayVar(&opts.BindingSecret, cli.StripDash(cli.BindingSecretFlagName), []string{}, "`name` of binding secret to be mounted (may be set multiple times)")
 	cmd.Flags().BoolVar(&opts.Tail, cli.StripDash(cli.TailFlagName), false, "watch deployer logs")
 	cmd.Flags().StringVar(&opts.WaitTimeout, cli.StripDash(cli.WaitTimeoutFlagName), "10m", "`duration` to wait for the deployer to become ready when watching logs")
